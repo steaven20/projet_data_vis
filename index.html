@@ -10,7 +10,6 @@
   <body>
     <div id="heatmap"></div>
     <div id="heatmap1"></div>
-    <div id="heatmap2"></div>
     <script type="text/javascript">
       var radius = 10;
       var width = 400;
@@ -117,22 +116,7 @@
         pointImgData[i - 2] = palette[offset + 1];
         pointImgData[i - 1] = palette[offset + 2];
       }
-      //draw result
-      var resCanvas = d3
-        .select("#heatmap2")
-        .append("canvas")
-        .attr("width", w)
-        .attr("height", h);
-      var ctxFinal = resCanvas.getContext("2d");
-      var bgImg = new Image();
-      bgImg.src = "/Nuke.webp";
-      setTimeout(function () {
-        ctxFinal.drawImage(myImg, 0, 0, 800, 800);
-        ctxFinal.drawImage(bgImg, 0, 0, 800, 800);
-        document.querySelector(".generateImg").src = canvas.toDataURL(
-          "./src_heatmap/webp"
-        );
-      }, 10);
+      context.putImageData(pointImg, 0, 0);
     </script>
   </body>
 </html>
