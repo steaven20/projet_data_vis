@@ -8,19 +8,25 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
   </head>
   <body>
+    <div id="heatmap"></div>
+    <canvas id="canvas"></canvas>
     <script type="text/javascript">
       var width = 400;
       var height = 400;
+      var raduis = 10;
       var svg = d3
         .select("body")
+        .select("div#heatmap")
         .append("svg")
+        .attr("id", "svg_page")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .attr("xmlns", "http://www.w3.org/2000/svg");
 
-      //defini dfs
+      //define dfs
       var defs = svg.append("defs");
 
-      //Create a radial blue-like gradient
+      //Create a radial gradient
       const radialGradient = defs
         .append("radialGradient")
         .attr("id", "blue-gradient");
@@ -28,27 +34,21 @@
       radialGradient //linearGradient中插入stop元素
         .append("stop")
         .attr("offset", "0%") //设置坡度，下同
-        .attr("stop-color", "grey"); //设置对应颜色，下同
+        .attr("stop-color", "rgba(0,0,0,1)"); //设置对应颜色，下同
 
       radialGradient
         .append("stop")
         .attr("offset", "100%")
-        .attr("stop-color", "white");
-
-      svg
-        .append("circle")
-        .attr("cx", "15px")
-        .attr("cy", "15px")
-        .attr("r", "15px")
-        .attr("fill", "url(#blue-gradient)");
+        .attr("stop-color", "rgba(0,0,0,0)");
 
       // now generate some random data
       var points = [];
       var max = 0;
-      var len = 50;
+      var len = 100;
+      var maxWeight = 100;
 
       while (len--) {
-        var val = Math.floor(Math.random() * 100);
+        var val = Math.floor(Math.random() * maxWeight);
         max = Math.max(max, val);
         var point = {
           //这里可以自定义
@@ -59,9 +59,27 @@
         points.push(point);
       }
 
-      d3.csv("src_heatmap/positionsAlt.csv").then(function (d) {
-        console.log(points);
-      });
+      // part3 draw map weight with circle
+      //transfor obj stype vg to type canvas
+      grapheCircle = svg
+        .selectAll("circle")
+        .data(points)
+        .join("circle")
+        .attr("cx", function (d) {
+          return d.x;
+        })
+        .attr("cy", function (d) {
+          return d.y;
+        })
+        .attr("r", raduis)
+        .style("opacity", function (d) {
+          var value = (d.value / maxWeight) * 100;
+          return value + "%";
+        })
+        .attr("fill", "url(#blue-gradient)");
+
+      // part4 injection map with color
+      // transfrom img svg to img canvas
     </script>
   </body>
 </html>
