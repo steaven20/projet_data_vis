@@ -9,47 +9,31 @@
   </head>
   <body>
     <div id="heatmap"></div>
-    <canvas id="canvas"></canvas>
+    <div id="heatmap1"></div>
     <script type="text/javascript">
+      var radius = 10;
       var width = 400;
       var height = 400;
-      var raduis = 10;
-      var svg = d3
-        .select("body")
-        .select("div#heatmap")
-        .append("svg")
-        .attr("id", "svg_page")
+
+      var canvas = d3
+        .select("#heatmap")
+        .append("canvas")
         .attr("width", width)
-        .attr("height", height)
-        .attr("xmlns", "http://www.w3.org/2000/svg");
+        .attr("height", height);
 
-      //define dfs
-      var defs = svg.append("defs");
-
-      //Create a radial gradient
-      const radialGradient = defs
-        .append("radialGradient")
-        .attr("id", "blue-gradient");
-
-      radialGradient //linearGradient中插入stop元素
-        .append("stop")
-        .attr("offset", "0%") //设置坡度，下同
-        .attr("stop-color", "rgba(0,0,0,1)"); //设置对应颜色，下同
-
-      radialGradient
-        .append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", "rgba(0,0,0,0)");
+      var context = canvas.node().getContext("2d");
 
       // now generate some random data
       var points = [];
-      var max = 0;
+      var max = 100;
+      var min = 0;
       var len = 100;
       var maxWeight = 100;
 
       while (len--) {
         var val = Math.floor(Math.random() * maxWeight);
         max = Math.max(max, val);
+        min = Math.min(min, val);
         var point = {
           //这里可以自定义
           x: Math.floor(Math.random() * width),
@@ -58,28 +42,81 @@
         };
         points.push(point);
       }
+      //draw each circle
+      points.forEach((d) => {
+        // 开始为每个数据点绘制圆，圆心为[x,y]，半径为radius
+        context.beginPath();
+        context.arc(d.x, d.y, radius, 0, 2 * Math.PI);
+        context.fillStyle = "red";
+        // 给圆加上渐变色，圆心至边的渐变色为#000至透明
+        let radialGradient = context.createRadialGradient(
+          d.x,
+          d.y,
+          0,
+          d.x,
+          d.y,
+          radius
+        );
+        radialGradient.addColorStop(0, "rgba(0,0,0,1)");
+        radialGradient.addColorStop(1, "rgba(0,0,0,0)");
+        context.fillStyle = radialGradient;
+        // 给圆加上透明度，值为globalAlpha
+        let globalAlpha = (d.value - min) / (max - min);
+        context.globalAlpha = Math.max(Math.min(globalAlpha, 1), min);
 
-      // part3 draw map weight with circle
-      //transfor obj stype vg to type canvas
-      grapheCircle = svg
-        .selectAll("circle")
-        .data(points)
-        .join("circle")
-        .attr("cx", function (d) {
-          return d.x;
-        })
-        .attr("cy", function (d) {
-          return d.y;
-        })
-        .attr("r", raduis)
-        .style("opacity", function (d) {
-          var value = (d.value / maxWeight) * 100;
-          return value + "%";
-        })
-        .attr("fill", "url(#blue-gradient)");
+        context.fill();
+        context.closePath();
+      });
 
-      // part4 injection map with color
-      // transfrom img svg to img canvas
+      //creer a line of color 256*1
+      // 创建一条宽为256,高为1的像素带，颜色可自定义。
+      var w = 256;
+      var h = 1;
+      function getColorPaint() {
+        var paletteCanvas = d3
+          .select("#heatmap1")
+          .append("canvas")
+          .attr("width", w)
+          .attr("height", h);
+
+        var ctx = paletteCanvas.node().getContext("2d");
+
+        //define color
+        let gradientConfig = {
+          "0.0": "#6E32C2",
+          "0.1": "#1890FF",
+          "0.2": "#12CCCC",
+          "0.3": "#80FF73",
+          "0.4": "#FAFFA8",
+          "0.5": "#FFC838",
+          "0.6": "#FF8C12",
+          "0.7": "#FA541C",
+          "1.0": "#F51D27"
+        };
+        //creer un bound pixcel 256*1
+        let linearGradient = ctx.createLinearGradient(0, 0, w, h);
+        for (let key in gradientConfig) {
+          // 绘制彩色渐变色条
+          linearGradient.addColorStop(key, gradientConfig[key]);
+        }
+        ctx.fillStyle = linearGradient;
+        ctx.fillRect(0, 0, w, h);
+        return ctx.getImageData(0, 0, width, height).data;
+      }
+
+      let palette = getColorPaint();
+
+      let pointImg = context.getImageData(0, 0, 800, 800);
+      let pointImgData = pointImg.data;
+
+      for (var i = 3; i < pointImgData.length; i += 4) {
+        let alpha = pointImgData[i];
+        let offset = alpha * 4;
+        pointImgData[i - 3] = palette[offset];
+        pointImgData[i - 2] = palette[offset + 1];
+        pointImgData[i - 1] = palette[offset + 2];
+      }
+      context.putImageData(pointImg, 0, 0);
     </script>
   </body>
 </html>
