@@ -1,16 +1,67 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Parcel Sandbox</title>
-    <meta charset="UTF-8" />
-    <style></style>
-  </head>
-
-  <body>
-    <p>hello world</p>
-
-    <div id="visu-tp4"></div>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>HeadMap.js</title>
+    <!--Framework-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      var width = 400;
+      var height = 400;
+      var svg = d3
+        .select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      //defini dfs
+      var defs = svg.append("defs");
+
+      //Create a radial blue-like gradient
+      const radialGradient = defs
+        .append("radialGradient")
+        .attr("id", "blue-gradient");
+
+      radialGradient //linearGradient中插入stop元素
+        .append("stop")
+        .attr("offset", "0%") //设置坡度，下同
+        .attr("stop-color", "grey"); //设置对应颜色，下同
+
+      radialGradient
+        .append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "white");
+
+      svg
+        .append("circle")
+        .attr("cx", "15px")
+        .attr("cy", "15px")
+        .attr("r", "15px")
+        .attr("fill", "url(#blue-gradient)");
+
+      // now generate some random data
+      var points = [];
+      var max = 0;
+      var len = 50;
+
+      while (len--) {
+        var val = Math.floor(Math.random() * 100);
+        max = Math.max(max, val);
+        var point = {
+          //这里可以自定义
+          x: Math.floor(Math.random() * width),
+          y: Math.floor(Math.random() * height),
+          value: val
+        };
+        points.push(point);
+      }
+
+      d3.csv("src_heatmap/positionsAlt.csv").then(function (d) {
+        console.log(points);
+      });
+    </script>
   </body>
 </html>
