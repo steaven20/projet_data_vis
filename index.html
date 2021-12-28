@@ -10,10 +10,13 @@
   <body>
     <div id="heatmap"></div>
     <div id="heatmap1"></div>
+    <div id="heatmap2">
+        <img src="./src_heatmap/Nuke.png" id="imgs" style="display:none"></img>
+    </div>
     <script type="text/javascript">
-      var radius = 10;
-      var width = 400;
-      var height = 400;
+      var radius = 20;
+      var width = 1000;
+      var height = 1000;
 
       var canvas = d3
         .select("#heatmap")
@@ -61,8 +64,7 @@
         radialGradient.addColorStop(1, "rgba(0,0,0,0)");
         context.fillStyle = radialGradient;
         // 给圆加上透明度，值为globalAlpha
-        let globalAlpha = (d.value - min) / (max - min);
-        context.globalAlpha = Math.max(Math.min(globalAlpha, 1), min);
+        context.globalAlpha = 0.7;
 
         context.fill();
         context.closePath();
@@ -72,6 +74,7 @@
       // 创建一条宽为256,高为1的像素带，颜色可自定义。
       var w = 256;
       var h = 1;
+
       function getColorPaint() {
         var paletteCanvas = d3
           .select("#heatmap1")
@@ -104,19 +107,44 @@
         return ctx.getImageData(0, 0, width, height).data;
       }
 
+      
       let palette = getColorPaint();
 
-      let pointImg = context.getImageData(0, 0, 800, 800);
+      let pointImg = context.getImageData(0, 0, width, height);
       let pointImgData = pointImg.data;
 
-      for (var i = 3; i < pointImgData.length; i += 4) {
-        let alpha = pointImgData[i];
-        let offset = alpha * 4;
-        pointImgData[i - 3] = palette[offset];
-        pointImgData[i - 2] = palette[offset + 1];
-        pointImgData[i - 1] = palette[offset + 2];
-      }
-      context.putImageData(pointImg, 0, 0);
+      let pm1 = new Promise((res,rej)=>{
+            for (var i = 3; i < pointImgData.length; i += 4) {
+                let alpha = pointImgData[i];
+                let offset = alpha * 4;
+                pointImgData[i - 3] = palette[offset];
+                pointImgData[i - 2] = palette[offset + 1];
+                pointImgData[i - 1] = palette[offset + 2];
+            }
+            pointImg.data = pointImgData;
+            res();
+      });
+      
+      
+        
+
+        var bgImg = new Image();
+        bgImg= document.getElementById("imgs");
+        
+        let pm2 = new Promise((res,rej)=>{
+            bgImg.onload = ()=>{
+                context.clearRect(0,0,width,height);
+                res();
+            }
+        });
+      
+        let drawAllImg = Promise.all([pm1, pm2]).then((res)=>{
+            context.putImageData(pointImg, 0, 0);
+            context.drawImage(bgImg, 0, 0, width, height);
+        });
+
+      
+      
     </script>
   </body>
 </html>
