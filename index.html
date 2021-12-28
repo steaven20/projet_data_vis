@@ -64,7 +64,7 @@
         radialGradient.addColorStop(1, "rgba(0,0,0,0)");
         context.fillStyle = radialGradient;
         // 给圆加上透明度，值为globalAlpha
-        context.globalAlpha = 0.7;
+        context.globalAlpha = 0.5;
 
         context.fill();
         context.closePath();
@@ -141,6 +141,7 @@
         let drawAllImg = Promise.all([pm1, pm2]).then((res)=>{
             context.putImageData(pointImg, 0, 0);
             context.drawImage(bgImg, 0, 0, width, height);
+            
         });
 
       
