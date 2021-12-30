@@ -14,6 +14,31 @@
         <img src="./src_heatmap/Nuke.png" id="imgs" style="display:none"></img>
     </div>
     <script type="text/javascript">
+    //generer data au hasard
+    function geneDataHasard(width,height){
+        // now generate some random data
+        var points = [];
+        var max = 100;
+        var min = 0;
+        var len = 100;
+        var maxWeight = 100;
+
+        while (len--) {
+            var val = Math.floor(Math.random() * maxWeight);
+            max = Math.max(max, val);
+            min = Math.min(min, val);
+            var point = {
+            //这里可以自定义
+            x: Math.floor(Math.random() * width),
+            y: Math.floor(Math.random() * height),
+            value: val
+            };
+            points.push(point);
+            
+        }
+        return points;
+    }
+    function genereHeatmap(points){
       var radius = 20;
       var width = 1000;
       var height = 1000;
@@ -26,25 +51,8 @@
 
       var context = canvas.node().getContext("2d");
 
-      // now generate some random data
-      var points = [];
-      var max = 100;
-      var min = 0;
-      var len = 100;
-      var maxWeight = 100;
-
-      while (len--) {
-        var val = Math.floor(Math.random() * maxWeight);
-        max = Math.max(max, val);
-        min = Math.min(min, val);
-        var point = {
-          //这里可以自定义
-          x: Math.floor(Math.random() * width),
-          y: Math.floor(Math.random() * height),
-          value: val
-        };
-        points.push(point);
-      }
+      
+      
       //draw each circle
       points.forEach((d) => {
         // 开始为每个数据点绘制圆，圆心为[x,y]，半径为radius
@@ -64,7 +72,7 @@
         radialGradient.addColorStop(1, "rgba(0,0,0,0)");
         context.fillStyle = radialGradient;
         // 给圆加上透明度，值为globalAlpha
-        context.globalAlpha = 0.5;
+        context.globalAlpha = 0.7;
 
         context.fill();
         context.closePath();
@@ -127,7 +135,7 @@
       
       
         
-
+        //draw heatmap with backgroud map
         var bgImg = new Image();
         bgImg= document.getElementById("imgs");
         
@@ -141,8 +149,12 @@
         let drawAllImg = Promise.all([pm1, pm2]).then((res)=>{
             context.putImageData(pointImg, 0, 0);
             context.drawImage(bgImg, 0, 0, width, height);
-            
         });
+    }
+
+    var listpoint = geneDataHasard(1000,1000);
+    genereHeatmap(listpoint);
+    console.log(listpoint);
 
       
       
