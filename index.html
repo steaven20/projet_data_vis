@@ -219,10 +219,10 @@ for(var i = 0;i<d.length;i++){
     if(d[i]["Type"]=="DamageReceived_origin" && d[i]["Pseudo"]=="LaMasse"){
         let x=parseFloat(d[i]["X"]);
         let y=parseFloat(d[i]["Y"]);
-        x=x+2411.96;
+        x=x+2911.96;
         y=y+2479.4;
-        x=Math.floor(915-x/7+90);
-        y=Math.floor(487-y/7+220);
+        x=Math.floor(x/7.1+60);
+        y=Math.floor(487-y/7.1+275);
         let key = x.toString()+","+y.toString();
         if(tab.has(key)){
             tab.set(key,tab.get(key)+1);
@@ -295,10 +295,14 @@ function update(d){
     function ajouterElementDansMap(itemD,tab){
         let x=parseFloat(itemD["X"]);
         let y=parseFloat(itemD["Y"]);
-        x=x+2411.96;
+        //x=x+2411.96;
+        //y=y+2479.4;
+        //x=Math.floor(915-x/7.1+90);
+        //y=Math.floor(487-y/7.1+220);
+        x=x+2911.96;
         y=y+2479.4;
-        x=Math.floor(915-x/7+90);
-        y=Math.floor(487-y/7+220);
+        x=Math.floor(x/7.1+60);
+        y=Math.floor(487-y/7.1+275);
         let key = x.toString()+","+y.toString();
         if(tab.has(key)){
             tab.set(key,tab.get(key)+1);
