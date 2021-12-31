@@ -6,10 +6,52 @@
     <!--Framework-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+   
   </head>
   <body>
     <div id="heatmap"></div>
-    <div id="heatmap1"></div>
+    <div id="heatmap1">
+      <select id="typeEventSelect" onchange="">
+        <option value="1">damage</option>
+        <option value="2">recive_damage</option>
+        <option value="3">kill</option>
+        <option value="4">death</option>
+    </select>
+    <select id="typeGameSelect" onchange="">
+        <option value="1">all the game</option>
+        <option value="2">in one game</option>
+        <option value="3">in a round</option>
+    </select>
+    <select id="typePlayerSelect" onchange="">
+        <option value="1">player "LaMass"</option>
+        <option value="2">tame T</option>
+        <option value="3">tame CT</option>
+        <option value="4">everone</option>
+    </select>
+    <br />
+    <input
+    id="sliderGameNumber"
+    type="range"
+    value="0"
+    min="0"
+    max="19"
+    step="1"
+    /><br />
+    <span id="GameNumber">Game Number</span>
+    <br />
+    <input
+    id="sliderRoundNumber"
+    type="range"
+    value="1"
+    min="1"
+    max="15"
+    step="1"
+    /><br />
+    <span id="RoundNumber">Round Number</span><br />
+    
+    <button type="button" id="button">draw heatmap</button><br />
+  </div>
     <div id="heatmap2">
         <img src="./src_heatmap/Nuke.png" id="imgs" style="display:none"></img>
     </div>
@@ -40,6 +82,8 @@ function geneDataHasard(width,height){
 }
 //obtient valeur maximal et minimal
 function getMax(points){
+    if(points.length==0)
+      return 0;
     var max = points[0].value;
     for(var i=0;i<points.length;i++){
         if(max<points[i].value)
@@ -48,6 +92,8 @@ function getMax(points){
     return max;
 }
 function getMin(points){
+    if(points.length==0)
+      return 0;
     var min = points[0].value;
     for(var i=0;i<points.length;i++){
         if(min>points[i].value)
@@ -91,7 +137,7 @@ function genereHeatmap(points){
     radialGradient.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = radialGradient;
     // 给圆加上透明度，值为globalAlpha
-    context.globalAlpha = 0.7;
+    
     let globalAlpha = (d.value - min) / (max - min)
     context.globalAlpha = Math.max(Math.min(globalAlpha, 1), 0)
      
@@ -143,44 +189,267 @@ function genereHeatmap(points){
   let pointImg = context.getImageData(0, 0, width, height);
   let pointImgData = pointImg.data;
 
-  let pm1 = new Promise((res,rej)=>{
-        for (var i = 3; i < pointImgData.length; i += 4) {
-            let alpha = pointImgData[i];
-            let offset = alpha * 4;
-            pointImgData[i - 3] = palette[offset];
-            pointImgData[i - 2] = palette[offset + 1];
-            pointImgData[i - 1] = palette[offset + 2];
-        }
-        pointImg.data = pointImgData;
-        res();
-  });
-  
-  
     
-    //draw heatmap with backgroud map
+    for (var i = 3; i < pointImgData.length; i += 4) {
+        let alpha = pointImgData[i];
+        let offset = alpha * 4;
+        pointImgData[i - 3] = palette[offset];
+        pointImgData[i - 2] = palette[offset + 1];
+        pointImgData[i - 1] = palette[offset + 2];
+    }
+    pointImg.data = pointImgData;
+    
+    context.putImageData(pointImg, 0, 0);
     var bgImg = new Image();
     bgImg= document.getElementById("imgs");
-    
-    let pm2 = new Promise((res,rej)=>{
-        bgImg.onload = ()=>{
-            context.clearRect(0,0,width,height);
-            res();
-        }
-    });
-  
-    let drawAllImg = Promise.all([pm1, pm2]).then((res)=>{
-        context.putImageData(pointImg, 0, 0);
-        context.drawImage(bgImg, 0, 0, width, height);
-    });
+    context.drawImage(bgImg, 0, 0, width, height);
 }
 
+    
+    
+var nomJoueur = "LaMasse";
 
-    var listpoint = geneDataHasard(1000,1000);
+//creer hash map pour stocker
+var d=d3.csv("src_heatmap/positionsAlt.csv").then(d=>{
+//console.log(d);
+var tab = new Map();
+//console.log(tab);
+//DamageReceived_target pour tous les jeus
+for(var i = 0;i<d.length;i++){
+    if(d[i]["Type"]=="DamageReceived_origin" && d[i]["Pseudo"]=="LaMasse"){
+        let x=parseFloat(d[i]["X"]);
+        let y=parseFloat(d[i]["Y"]);
+        x=x+2411.96;
+        y=y+2479.4;
+        x=Math.floor(915-x/7+90);
+        y=Math.floor(487-y/7+220);
+        let key = x.toString()+","+y.toString();
+        if(tab.has(key)){
+            tab.set(key,tab.get(key)+1);
+        }else{
+            tab.set(key,0);
+        }
+    }
+}
+
+//console.log(tab);
+var listpoint = [];
+//transfer value dans hashmap en liste points pour ajouter dans heatmap
+for(var [key,value] of tab){
+    let arr = key.split(",");
+    var point = {
+    //这里可以自定义
+    x: parseInt(arr[0]),
+    y: parseInt(arr[1]),
+    value: value
+    };
+    listpoint.push(point);
+}
+
+//var listpoint = geneDataHasard(1000,1000);
+genereHeatmap(listpoint);
+
+function update(d){
+    //effacer la carte d'abord
+    var canvas = d3
+    .select("#heatmap")
+    .selectAll("canvas")
+    .remove();
+
+    canvas = d3
+    .select("#heatmap1")
+    .selectAll("canvas")
+    .remove();
+
+
+    var typeEventSelect = d3.select("#typeEventSelect").property("value");
+    var typeGameSelect = d3.select("#typeGameSelect").property("value");
+    var typePlayerSelect = d3.select("#typePlayerSelect").property("value");
+    var roundNumberSelect = d3.select("#sliderRoundNumber").property("value");
+    var GameNumberSelect = d3.select("#sliderGameNumber").property("value");
+    //console.log(typeEventSelect," ",typeGameSelect," ",typePlayerSelect," ",roundNumberSelect," ",GameNumberSelect);
+
+    if(typeEventSelect==1){
+        typeEventSelect = "DamageReceived_origin";
+    }else if(typeEventSelect==2){
+        typeEventSelect = "DamageReceived_target";
+    }else if(typeEventSelect==3){
+        typeEventSelect = "Kill";
+    }else{
+        typeEventSelect = "Death";
+    }
+
+    //typeGameSelect
+    //"1" all the game
+    //"2" in one game
+    //"3" in a round
+
+    //typePlayerSelect
+    //1 player "LaMass"
+    //2 tame T
+    //3 tame CT
+    //4 everone
+
+    tab = new Map();
+
+    function ajouterElementDansMap(itemD,tab){
+        let x=parseFloat(itemD["X"]);
+        let y=parseFloat(itemD["Y"]);
+        x=x+2411.96;
+        y=y+2479.4;
+        x=Math.floor(915-x/7+90);
+        y=Math.floor(487-y/7+220);
+        let key = x.toString()+","+y.toString();
+        if(tab.has(key)){
+            tab.set(key,tab.get(key)+1);
+        }else{
+            tab.set(key,0);
+        }
+        return tab;
+    }
+
+    //"1" pour tous les jeus
+    if(typeGameSelect==1){
+        if(typePlayerSelect==1){
+            // pour joueur LaMass
+                for(var i = 0;i<d.length;i++){
+                    if( d[i]["Pseudo"]=="LaMasse" && d[i]["Type"]==typeEventSelect ){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+                }
+        }else if(typePlayerSelect==2){
+            //pour equipe T
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="T" && d[i]["Type"]==typeEventSelect ){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==3){
+            //pour equipe CT
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="CT" && d[i]["Type"]==typeEventSelect ){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==4){
+            //pour tout le mond
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Type"]==typeEventSelect ){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }
+    //"2" pour un jeu avec 15 tour
+    }else if(typeGameSelect==2){
+        if(typePlayerSelect==1){
+            // pour joueur LaMass
+                for(var i = 0;i<d.length;i++){
+                    if( d[i]["Pseudo"]=="LaMasse" && d[i]["Type"]==typeEventSelect && d[i]["Game_number"]==GameNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+                }
+        }else if(typePlayerSelect==2){
+            //pour equipe T
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="T" && d[i]["Type"]==typeEventSelect && d[i]["Game_number"]==GameNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==3){
+            //pour equipe CT
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="CT" && d[i]["Type"]==typeEventSelect && d[i]["Game_number"]==GameNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==4){
+            //pour tout le mond
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Type"]==typeEventSelect && d[i]["Game_number"]==GameNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }
+        //3 pour un tour pendant un jeu
+    }else if(typeGameSelect==3){
+        if(typePlayerSelect==1){
+            // pour joueur LaMass
+                for(var i = 0;i<d.length;i++){
+                    if( d[i]["Pseudo"]=="LaMasse" && d[i]["Type"]==typeEventSelect && 
+                    d[i]["Game_number"]==GameNumberSelect && d[i]["Round_number"]==roundNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+                }
+        }else if(typePlayerSelect==2){
+            //pour equipe T
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="T" && d[i]["Type"]==typeEventSelect 
+                    && d[i]["Game_number"]==GameNumberSelect && d[i]["Round_number"]==roundNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==3){
+            //pour equipe CT
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Team"]=="CT" && d[i]["Type"]==typeEventSelect 
+                    && d[i]["Game_number"]==GameNumberSelect && d[i]["Round_number"]==roundNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }else if(typePlayerSelect==4){
+            //pour tout le mond
+            for(var i = 0;i<d.length;i++){
+                    if(d[i]["Type"]==typeEventSelect 
+                    && d[i]["Game_number"]==GameNumberSelect && d[i]["Round_number"]==roundNumberSelect){
+                        tab = ajouterElementDansMap(d[i],tab);
+                    }
+            }
+        }
+    }
+
+    listpoint = [];
+    //transfer value dans hashmap en liste points pour ajouter dans heatmap
+    for(var [key,value] of tab){
+        let arr = key.split(",");
+        var point = {
+        //这里可以自定义
+        x: parseInt(arr[0]),
+        y: parseInt(arr[1]),
+        value: value
+        };
+        listpoint.push(point);
+    }
+    
+    //var listpoint = geneDataHasard(1000,1000);
     genereHeatmap(listpoint);
-    console.log(listpoint);
 
-      
-      
+}
+
+d3.select("#button").on("click", function () {
+      update(d);
+      //console.log(this.value);
+});
+
+});
+
+
+//show round number
+d3.select("#sliderRoundNumber").on("input", function () {
+    d3.select("#RoundNumber").html(
+    "Round Number : " +
+      " " + this.value
+  );
+});
+
+//show Game number
+d3.select("#sliderGameNumber").on("input", function () {
+    d3.select("#GameNumber").html(
+    "Game Number : " +
+      " " + this.value
+  );
+});
+    
     </script>
+    
   </body>
 </html>
